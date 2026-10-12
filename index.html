@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shek Modz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        white: '#22ff66',
+                        dark: '#020a04',
+                        cardDark: '#0d0d0e',
+                        borderGlow: 'rgba(34, 255, 102, 0.25)',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        body {
+            background-color: #010502;
+            color: #22ff66;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Heavy visual effects */
+        .glow-heavy {
+            box-shadow: 0 0 25px rgba(34, 255, 102, 0.45), inset 0 0 15px rgba(34, 255, 102, 0.2);
+        }
+
+        .glow-text {
+            text-shadow: 0 0 12px rgba(34, 255, 102, 0.8), 0 0 25px rgba(34, 255, 102, 0.4);
+        }
+
+        .glow-box-sm {
+            box-shadow: 0 0 10px rgba(34, 255, 102, 0.2);
+        }
+
+        .glow-box-sm:hover {
+            box-shadow: 0 0 20px rgba(34, 255, 102, 0.6);
+            border-color: #22ff66;
+        }
+
+        .chrome-gradient {
+            background: linear-gradient(135deg, #22ff66 0%, #14a83c 50%, #0b5a20 75%, #22ff66 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .chrome-bg {
+            background: linear-gradient(135deg, #22ff66 0%, #12902f 50%, #04200c 100%);
+        }
+
+        .glass-panel {
+            background: rgba(15, 15, 18, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(34, 255, 102, 0.15);
+        }
+
+        .scanline {
+            background: linear-gradient(
+                to bottom,
+                rgba(34, 255, 102,0),
+                rgba(34, 255, 102,0) 50%,
+                rgba(0, 0, 0, 0.4) 50%,
+                rgba(0, 0, 0, 0.4)
+            );
+            background-size: 100% 4px;
+        }
+
+        .grid-bg {
+            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, rgba(34, 255, 102, 0.04) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(34, 255, 102, 0.04) 1px, transparent 1px);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020a04;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333333;
+            border-radius: 4px;
+            border: 1px solid #555;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #22ff66;
+            box-shadow: 0 0 10px #22ff66;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 15px rgba(34, 255, 102,0.6)); }
+            50% { opacity: 1; filter: drop-shadow(0 0 30px rgba(34, 255, 102,0.9)); }
+        }
+
+        .animate-pulse-glow {
+            animation: pulseGlow 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="relative min-h-screen grid-bg">
+
+    <canvas id="bgCanvas" class="fixed top-0 left-0 w-full h-full pointer-events-none z-0 opacity-40"></canvas>
+
+    <div class="relative z-10 flex flex-col min-h-screen">
+        
+        <header class="w-full border-b border-white/20 bg-black/80 backdrop-blur-md sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-white text-black font-black flex items-center justify-center font-mono shadow-[0_0_15px_rgba(34, 255, 102,0.8)]">SM</div>
+                    <span class="font-black tracking-widest text-xl chrome-gradient uppercase font-mono">Shek Modz</span>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <div id="adminBadge" class="hidden items-center gap-2 px-3 py-1 bg-white/10 border border-white/40 rounded-full text-xs font-mono glow-box-sm">
+                        <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
+                        <span class="text-white font-bold tracking-wider">ADMIN UNLOCKED</span>
+                        <button onclick="logoutAdmin()" class="ml-2 text-green-300/60 hover:text-white"><i class="fa-solid fa-right-from-bracket"></i></button>
+                    </div>
+
+                    <button id="openAuthBtn" onclick="toggleAuthModal()" class="px-4 py-1.5 rounded-lg border border-white/30 bg-black hover:bg-white hover:text-black transition-all duration-300 font-mono text-xs uppercase tracking-wider font-bold glow-box-sm flex items-center gap-2">
+                        <i class="fa-solid fa-key text-xs"></i> Admin Access
+                    </button>
+                    
+                    <button id="createPostBtn" onclick="openPostModal()" class="hidden px-4 py-1.5 rounded-lg bg-white text-black hover:bg-green-300 transition-all duration-300 font-mono text-xs uppercase tracking-wider font-extrabold shadow-[0_0_15px_rgba(34, 255, 102,0.7)] flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Create Mod
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <section class="relative w-full border-b border-white/15 py-16 md:py-24 bg-gradient-to-b from-black via-zinc-950 to-black overflow-hidden scanline">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(34, 255, 102,0.12)_0,transparent_70%)] pointer-events-none"></div>
+            
+            <div class="max-w-5xl mx-auto px-4 text-center relative z-10">
+                <div class="inline-block px-4 py-1 mb-4 border border-white/30 rounded-full bg-white/5 backdrop-blur-md text-xs font-mono tracking-widest uppercase text-green-200/80 glow-box-sm">
+                    /// discord.gg/KKkp2S4NdS ///
+                </div>
+                
+                <h1 class="text-5xl md:text-8xl font-black tracking-tighter uppercase mb-4 chrome-gradient animate-pulse-glow">
+                    Shek Modz
+                </h1>
+                
+                <p class="max-w-2xl mx-auto text-green-300/60 text-sm md:text-base font-mono mb-8 tracking-wide">
+                    BEST GAME INFO PULLS, BACKEND LEAKS, APKS, AND GENERAL MODS WEBSITE
+                </p>
+
+                <!-- Stats Strip -->
+                <div class="grid grid-cols-3 max-w-lg mx-auto gap-4 p-3 rounded-xl border border-white/10 bg-black/60 glass-panel">
+                    <div class="text-center">
+                        <div id="statTotal" class="text-2xl font-bold font-mono text-white">0</div>
+                        <div class="text-[10px] uppercase font-mono text-green-400/50">Total Mods</div>
+                    </div>
+                    <div class="text-center border-x border-white/10">
+                        <div id="statWorking" class="text-2xl font-bold font-mono text-white glow-text">0</div>
+                        <div class="text-[10px] uppercase font-mono text-green-400/50">Working</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold font-mono text-white">v2</div>
+                        <div class="text-[10px] uppercase font-mono text-green-400/50">Version</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-10">
+            
+            <!-- Filter Bar -->
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8 p-4 rounded-xl border border-white/15 bg-black/80 glass-panel">
+                <div class="relative w-full sm:w-80">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-green-400/50 text-xs"></i>
+                    <input type="text" id="searchInput" oninput="renderPosts()" placeholder="SEARCH MODS OR AUTHORS..." 
+                        class="w-full pl-9 pr-4 py-2 bg-black/60 border border-white/20 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition">
+                </div>
+
+                <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                    <span class="text-xs font-mono text-green-400/50 uppercase mr-1">Status:</span>
+                    <button onclick="setFilter('ALL')" id="filterAll" class="px-3 py-1.5 rounded-lg border border-white bg-white text-black text-xs font-mono font-bold transition">ALL</button>
+                    <button onclick="setFilter('Tested & Working')" id="filterWorking" class="px-3 py-1.5 rounded-lg border border-white/20 bg-black hover:border-white text-xs font-mono text-green-200/80 transition">WORKING</button>
+                    <button onclick="setFilter('Not Tested')" id="filterNotTested" class="px-3 py-1.5 rounded-lg border border-white/20 bg-black hover:border-white text-xs font-mono text-green-200/80 transition">UNTESTED</button>
+                    <button onclick="setFilter('Not Working')" id="filterNotWorking" class="px-3 py-1.5 rounded-lg border border-white/20 bg-black hover:border-white text-xs font-mono text-green-200/80 transition">BROKEN</button>
+                </div>
+            </div>
+
+            <!-- Posts Grid -->
+            <div id="postsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Posts populated via JS -->
+            </div>
+
+            <div id="noPostsMsg" class="hidden text-center py-20 border border-dashed border-white/20 rounded-2xl bg-black/40">
+                <i class="fa-solid fa-ghost text-4xl text-green-500/40 mb-3"></i>
+                <p class="font-mono text-sm text-green-300/60">No matching mods</p>
+            </div>
+        </main>
+
+        <footer class="w-full border-t border-white/15 py-8 bg-black mt-auto">
+            <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-mono text-green-400/50">
+                <div>&copy; 2026 SHEK MODZ. ALL RIGHTS RESERVED.</div>
+                <div class="flex gap-6">
+                    <span class="hover:text-white cursor-pointer transition">PRIVACY</span>
+                    <span class="hover:text-white cursor-pointer transition">TERMS</span>
+                    <span class="hover:text-white cursor-pointer transition">API</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <div id="authModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="max-w-md w-full glass-panel border border-white/30 rounded-2xl p-6 relative glow-heavy">
+            <button onclick="toggleAuthModal()" class="absolute top-4 right-4 text-green-300/60 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 rounded-full border border-white/40 bg-white/10 flex items-center justify-center mx-auto mb-3 shadow-[0_0_15px_rgba(34, 255, 102,0.5)]">
+                    <i class="fa-solid fa-lock text-white text-lg"></i>
+                </div>
+                <h3 class="text-xl font-black font-mono uppercase tracking-wider text-white">AUTHENTICATION</h3>
+                <p class="text-xs font-mono text-green-300/60 mt-1">ENTER ADMIN PASSCODE TO UNLOCK POST MANAGEMENT</p>
+            </div>
+
+            <form onsubmit="handleAuthSubmit(event)">
+                <div class="mb-4">
+                    <label class="block text-xs font-mono text-green-200/80 uppercase mb-2">ACCESS KEY</label>
+                    <input type="password" id="passwordInput" placeholder="Enter password..." required
+                        class="w-full px-4 py-3 bg-black border border-white/30 rounded-xl text-sm font-mono text-white focus:outline-none focus:border-white focus:ring-2 focus:ring-white/50 tracking-widest">
+                </div>
+                <div id="authError" class="hidden text-xs font-mono text-red-400 mb-4 text-center">
+                    <i class="fa-solid fa-circle-exclamation mr-1"></i> ACCESS DENIED: INVALID PASSCODE
+                </div>
+                <button type="submit" class="w-full py-3 bg-white text-black font-mono text-xs font-black uppercase rounded-xl hover:bg-green-300 transition shadow-[0_0_20px_rgba(34, 255, 102,0.6)]">
+                    VERIFY CREDENTIALS
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="postModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="max-w-xl w-full glass-panel border border-white/30 rounded-2xl p-6 md:p-8 relative glow-heavy my-8">
+            <button onclick="closePostModal()" class="absolute top-4 right-4 text-green-300/60 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="mb-6">
+                <h3 id="modalTitle" class="text-2xl font-black font-mono uppercase tracking-wider chrome-gradient">CREATE NEW MOD POST</h3>
+                <p class="text-xs font-mono text-green-300/60 mt-1">PUBLISH MODIFICATIONS TO THE SHEK ARCHIVE</p>
+            </div>
+
+            <form onsubmit="handleSavePost(event)" class="space-y-4">
+                <input type="hidden" id="postId">
+
+                <div>
+                    <label class="block text-xs font-mono text-green-200/80 uppercase mb-1">MOD TITLE *</label>
+                    <input type="text" id="postTitleInput" required placeholder="e.g., CyberHUD Overhaul v3.0"
+                        class="w-full px-4 py-2.5 bg-black border border-white/20 rounded-lg text-sm font-mono text-white focus:outline-none focus:border-white">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-mono text-green-200/80 uppercase mb-1">AUTHOR NAME *</label>
+                    <input type="text" id="postAuthorInput" required placeholder="e.g., NeonDev"
+                        class="w-full px-4 py-2.5 bg-black border border-white/20 rounded-lg text-sm font-mono text-white focus:outline-none focus:border-white">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-mono text-green-200/80 uppercase mb-1">STATUS *</label>
+                    <select id="postStatusInput" required class="w-full px-4 py-2.5 bg-black border border-white/20 rounded-lg text-sm font-mono text-white focus:outline-none focus:border-white">
+                        <option value="Tested & Working">Tested & Working</option>
+                        <option value="Not Tested">Not Tested</option>
+                        <option value="Not Working">Not Working</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-mono text-green-200/80 uppercase mb-1">DESCRIPTION *</label>
+                    <textarea id="postDescInput" rows="4" required placeholder="Detailed notes, installation steps, feature set..."
+                        class="w-full px-4 py-2.5 bg-black border border-white/20 rounded-lg text-sm font-mono text-white focus:outline-none focus:border-white"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-mono text-green-200/80 uppercase mb-1">FILE LINK OR FILE URL *</label>
+                    <input type="text" id="postFileInput" required placeholder="https://... or filename.zip"
+                        class="w-full px-4 py-2.5 bg-black border border-white/20 rounded-lg text-sm font-mono text-white focus:outline-none focus:border-white">
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="closePostModal()" class="w-1/2 py-3 bg-black border border-white/30 text-white font-mono text-xs font-bold uppercase rounded-xl hover:bg-white/10 transition">
+                        CANCEL
+                    </button>
+                    <button type="submit" class="w-1/2 py-3 bg-white text-black font-mono text-xs font-black uppercase rounded-xl hover:bg-green-300 transition shadow-[0_0_20px_rgba(34, 255, 102,0.7)]">
+                        SAVE MOD POST
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let posts = [];
+        let activeFilter = 'ALL';
+        let isAdmin = false;
+
+        const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        const safeUrl = (u) => /^https?:\/\//i.test(u) ? u : (/^[a-z][a-z0-9+.-]*:/i.test(u) ? '#' : encodeURI(u));
+
+        async function api(path, opts = {}) {
+            const res = await fetch(path, {
+                credentials: 'same-origin',
+                headers: opts.body ? { 'Content-Type': 'application/json' } : {},
+                ...opts,
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw Object.assign(new Error(data.error || 'Request failed'), { status: res.status });
+            return data;
+        }
+
+        window.addEventListener('load', async () => {
+            initCanvas();
+            try { isAdmin = (await api('/api/session')).admin; } catch (e) {}
+            updateAuthUI();
+            await loadPosts();
+        });
+
+        function updateAuthUI() {
+            const adminBadge = document.getElementById('adminBadge');
+            const openAuthBtn = document.getElementById('openAuthBtn');
+            const createPostBtn = document.getElementById('createPostBtn');
+            adminBadge.classList.toggle('hidden', !isAdmin);
+            adminBadge.classList.toggle('flex', isAdmin);
+            openAuthBtn.classList.toggle('hidden', isAdmin);
+            createPostBtn.classList.toggle('hidden', !isAdmin);
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const input = document.getElementById('passwordInput');
+            const errEl = document.getElementById('authError');
+            try {
+                await api('/api/login', { method: 'POST', body: JSON.stringify({ password: input.value }) });
+                isAdmin = true;
+                input.value = '';
+                errEl.classList.add('hidden');
+                updateAuthUI();
+                toggleAuthModal();
+                renderPosts();
+            } catch (err) {
+                errEl.innerHTML = '<i class="fa-solid fa-circle-exclamation mr-1"></i> ' + esc(err.status === 429 ? 'TOO MANY ATTEMPTS: TRY LATER' : 'ACCESS DENIED: INVALID PASSCODE');
+                errEl.classList.remove('hidden');
+            }
+        }
+
+        async function logoutAdmin() {
+            try { await api('/api/logout', { method: 'POST' }); } catch (e) {}
+            isAdmin = false;
+            updateAuthUI();
+            renderPosts();
+        }
+
+        function toggleAuthModal() {
+            document.getElementById('authModal').classList.toggle('hidden');
+            document.getElementById('authError').classList.add('hidden');
+        }
+
+        async function loadPosts() {
+            try { posts = await api('/api/posts'); } catch (e) { posts = []; }
+            renderPosts();
+        }
+
+        function setFilter(filter) {
+            activeFilter = filter;
+            const ids = { 'ALL': 'filterAll', 'Tested & Working': 'filterWorking', 'Not Tested': 'filterNotTested', 'Not Working': 'filterNotWorking' };
+            Object.entries(ids).forEach(([f, id]) => {
+                const el = document.getElementById(id);
+                el.className = f === activeFilter
+                    ? "px-3 py-1.5 rounded-lg border border-white bg-white text-black text-xs font-mono font-bold transition"
+                    : "px-3 py-1.5 rounded-lg border border-white/20 bg-black hover:border-white text-xs font-mono text-green-200/80 transition";
+            });
+            renderPosts();
+        }
+
+        function openPostModal(editId = null) {
+            const modalTitle = document.getElementById('modalTitle');
+            const post = editId ? posts.find(p => p.id === editId) : null;
+            document.getElementById('postId').value = post ? post.id : '';
+            document.getElementById('postTitleInput').value = post ? post.title : '';
+            document.getElementById('postAuthorInput').value = post ? post.author : '';
+            document.getElementById('postStatusInput').value = post ? post.status : 'Tested & Working';
+            document.getElementById('postDescInput').value = post ? post.desc : '';
+            document.getElementById('postFileInput').value = post ? post.fileLink : '';
+            modalTitle.innerText = post ? "EDIT MOD POST" : "CREATE NEW MOD POST";
+            document.getElementById('postModal').classList.remove('hidden');
+        }
+
+        function closePostModal() {
+            document.getElementById('postModal').classList.add('hidden');
+        }
+
+        async function handleSavePost(e) {
+            e.preventDefault();
+            const id = document.getElementById('postId').value;
+            const body = JSON.stringify({
+                title: document.getElementById('postTitleInput').value,
+                author: document.getElementById('postAuthorInput').value,
+                status: document.getElementById('postStatusInput').value,
+                description: document.getElementById('postDescInput').value,
+                file_link: document.getElementById('postFileInput').value,
+            });
+            try {
+                await api(id ? '/api/posts/' + id : '/api/posts', { method: id ? 'PUT' : 'POST', body });
+                closePostModal();
+                await loadPosts();
+            } catch (err) {
+                if (err.status === 401) { isAdmin = false; updateAuthUI(); closePostModal(); renderPosts(); }
+                alert(err.message);
+            }
+        }
+
+        async function deletePost(id) {
+            if (!isAdmin || !confirm('Delete this mod post?')) return;
+            try { await api('/api/posts/' + id, { method: 'DELETE' }); await loadPosts(); }
+            catch (err) { alert(err.message); }
+        }
+
+        function getStatusBadgeHtml(status) {
+            if (status === 'Tested & Working') {
+                return `<span class="px-2.5 py-1 rounded-full bg-white text-black font-extrabold text-[10px] font-mono tracking-wider shadow-[0_0_12px_rgba(34,255,102,0.9)] flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-check"></i> WORKING
+                        </span>`;
+            } else if (status === 'Not Tested') {
+                return `<span class="px-2.5 py-1 rounded-full border border-white/40 bg-white/10 text-green-200/80 text-[10px] font-mono tracking-wider flex items-center gap-1.5">
+                            <i class="fa-solid fa-triangle-exclamation"></i> UNTESTED
+                        </span>`;
+            }
+            return `<span class="px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-700 text-green-400/50 line-through text-[10px] font-mono tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-bug text-xs"></i> NOT WORKING
+                    </span>`;
+        }
+
+        function renderPosts() {
+            const container = document.getElementById('postsContainer');
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const noPostsMsg = document.getElementById('noPostsMsg');
+
+            const filtered = posts.filter(p =>
+                (activeFilter === 'ALL' || p.status === activeFilter) &&
+                (p.title.toLowerCase().includes(q) || p.author.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q))
+            );
+
+            document.getElementById('statTotal').innerText = posts.length;
+            document.getElementById('statWorking').innerText = posts.filter(p => p.status === 'Tested & Working').length;
+
+            if (!filtered.length) {
+                container.innerHTML = '';
+                noPostsMsg.classList.remove('hidden');
+                return;
+            }
+            noPostsMsg.classList.add('hidden');
+
+            container.innerHTML = filtered.map(post => `
+                <div class="glass-panel rounded-2xl border border-white/15 p-6 flex flex-col justify-between hover:border-white/50 transition-all duration-300 glow-box-sm group relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full blur-2xl pointer-events-none group-hover:bg-white/10 transition"></div>
+                    <div>
+                        <div class="flex justify-between items-start gap-2 mb-4">
+                            <div>${getStatusBadgeHtml(post.status)}</div>
+                            <span class="text-[10px] font-mono text-green-400/50">${esc(post.date)}</span>
+                        </div>
+                        <h2 class="text-xl font-bold font-mono tracking-wide text-white mb-2 group-hover:text-green-200 transition">${esc(post.title)}</h2>
+                        <p class="text-green-300/60 text-xs font-mono leading-relaxed mb-6 line-clamp-3">${esc(post.desc)}</p>
+                    </div>
+                    <div>
+                        <div class="pt-4 border-t border-white/10 flex justify-between items-center text-xs font-mono mb-4">
+                            <span class="text-green-400/50">AUTHOR: <strong class="text-white">${esc(post.author)}</strong></span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <a href="${esc(safeUrl(post.fileLink))}" target="_blank" rel="noopener noreferrer" class="flex-grow py-2 px-4 rounded-xl border border-white/30 bg-black hover:bg-white hover:text-black transition-all duration-300 text-center font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-download text-xs"></i> Get File
+                            </a>
+                            ${isAdmin ? `
+                                <button onclick="openPostModal(${post.id})" title="Edit Post" class="p-2 border border-white/20 bg-black/60 rounded-xl hover:border-white hover:text-white text-green-300/60 transition">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button onclick="deletePost(${post.id})" title="Delete Post" class="p-2 border border-red-500/30 bg-black/60 rounded-xl hover:border-red-500 text-red-400 transition">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function initCanvas() {
+            const canvas = document.getElementById('bgCanvas');
+            const ctx = canvas.getContext('2d');
+            function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+            resize();
+            window.addEventListener('resize', resize);
+
+            const particles = Array.from({ length: 40 }, () => ({
+                x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,
+                size: Math.random() * 2 + 1
+            }));
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'rgba(34, 255, 102, 0.6)';
+                ctx.strokeStyle = 'rgba(34, 255, 102, 0.08)';
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const p2 = particles[j];
+                        if (Math.hypot(p.x - p2.x, p.y - p2.y) < 120) {
+                            ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                        }
+                    }
+                }
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
+    </script>
+</body>
+</html>
